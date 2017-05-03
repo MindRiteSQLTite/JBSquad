@@ -1,0 +1,201 @@
+# JBSquad
+JBSquad doing it big on the SQL Project ft. Phandroid
+
+/* FINAL SQL CODE */
+
+
+CREATE TABLE Features
+(
+	FID INT IDENTITY NOT NULL
+	,Specification VARCHAR(50) NOT NULL
+	,Feature VARCHAR(50) NOT NULL
+)
+GO
+
+CREATE UNIQUE INDEX UI_Features_FID
+ON Features (FID)
+GO
+
+
+INSERT INTO Features
+SELECT DISTINCT Specification
+					,Feature
+FROM Group_2_MindRiteSQLTIte..Smartphones_Data
+
+
+CREATE TABLE Phones
+(
+	PID INT IDENTITY NOT NULL
+	,Phone_Name VARCHAR(50) NOT NULL
+	,Phone_URL VARCHAR(500) NOT NULL
+	,Phone_Forum_URL VARCHAR(500) NOT NULL
+)
+GO
+
+ALTER TABLE Phones
+ADD CONSTRAINT PK_Phones_PID PRIMARY KEY (PID)
+
+INSERT INTO Phones
+SELECT DISTINCT Smartphones_Data.Phone_Name
+				,Smartphones_Data.Phone_URL
+				,Smartphones_Data.Phone_Forum_URL
+FROM Group_2_MindRiteSQLTite..Smartphones_Data
+
+
+SELECT DISTINCT Smartphones_Data.Specification
+				,Smartphones_Data.Feature
+				,Features.FID
+FROM
+		Smartphones_Data
+	INNER JOIN
+		Features
+	ON Smartphones_Data.Feature = Features.Feature
+
+SELECT DISTINCT Group_2_MindRiteSQLTite..Smartphones_Data.Phone_Name
+				,Smartphones_Data.Phone_URL
+				,Smartphones_Data.Phone_Forum_URL
+				,Phones.PID
+FROM
+		Smartphones_Data
+	INNER JOIN
+		Phones
+	ON Smartphones_Data.Phone_Name = Phones.Phone_Name
+
+CREATE TABLE Represent
+(
+	PID INT NOT NULL
+	,FID INT NOT NULL
+	,Feature_Value VARCHAR(100) NULL
+)
+GO
+
+
+INSERT INTO Represent (PID, FID, Feature_Value)
+SELECT DISTINCT Phones.PID
+				,Features.FID
+				,Smartphones_Data.Feature_Value
+FROM 
+		Phones
+	INNER JOIN
+		Smartphones_Data
+	ON Smartphones_Data.Phone_Name = Phones.Phone_Name
+	INNER JOIN
+		Features
+	ON Smartphones_Data.Feature = Features.Feature
+
+
+/* 5/1 added code */ 
+
+CREATE TABLE Users
+(
+         Username VARCHAR(500) NOT NULL
+         ,User_Date_Joined VARCHAR(500) NOT NULL
+)
+GO
+ 
+INSERT INTO Users
+SELECT DISTINCT Username
+                ,User_Date_Joined
+FROM Group_2_MindRiteSQLTite..Smartphones_Data
+ 
+INSERT INTO Users
+SELECT DISTINCT First_Replier
+				,'1900-01-01'
+FROM Group_2_MindRiteSQLTite..Smartphones_Data
+WHERE First_Replier NOT IN
+  (
+        SELECT Username
+		 FROM Users
+  )
+ 
+ 
+CREATE TABLE Threads
+(
+	Thread_URL VARCHAR(500) NOT NULL
+	,Thread_Content VARCHAR(MAX) NULL
+	,Username VARCHAR(500) NOT NULL
+	,PID INT NOT NULL
+	,Date_of_Post DATETIME NOT NULL
+)
+
+ALTER TABLE Threads
+ADD CONSTRAINT PK_Threads_Thread_URL PRIMARY KEY (Thread_URL)
+
+INSERT INTO Threads (Thread_URL, Thread_Content, Username, PID, Date_of_Post)
+SELECT DISTINCT Smartphones_Data.Thread_URL
+				, Smartphones_Data.Thread_Content
+				,Smartphones_Data.Username
+				, Phones.PID
+				,Smartphones_Data.Date_of_Post
+FROM 
+		Group_2_MindRiteSQLTite..Smartphones_Data
+	INNER JOIN
+		Phones
+	ON Smartphones_Data.Phone_Name = Phones.Phone_Name
+		
+
+
+
+CREATE TABLE ReplyTo
+(
+	Username VARCHAR(500) NOT NULL
+	,Thread_URL VARCHAR(500) NOT NULL
+	,Date_of_First_Reply VARCHAR(500) NOT NULL
+	,First_Replier VARCHAR(500) NOT NULL
+	,Reply_Content VARCHAR(MAX) NOT NULL
+
+)
+GO
+
+INSERT INTO ReplyTo (Username, Thread_URL)
+SELECT DISTINCT Users.Username
+				,Thread.Thread_URL
+FROM 
+		Users
+	INNER JOIN
+		Smartphones_Data
+	ON Smartphones_Data.User_Date_Join = Users.User_Date_Join
+	INNER JOIN
+		Thread
+	ON Smartphones_Data.Thread_Content = Thread.Thread_Content
+
+
+
+
+
+
+
+
+/* Foreign Key */
+ALTER TABLE ReplyTo
+ADD CONSTRAINT FK_ReplyTo_Thread_Thread_URL FOREIGN KEY (Thread_URL)
+REFERENCES Thread (Thread_URL)
+GO
+
+ALTER TABLE Post
+ADD CONSTRAINT FK_ReplyTo_Users_Username FOREIGN KEY (Username)
+REFERENCES Users (Username)
+GO
+
+
+/* Foreign Key */
+ALTER TABLE Thread
+ADD CONSTRAINT FK_Thread_User_Username FOREIGN KEY (Username)
+REFERENCES Users (Username)
+GO
+
+ALTER TABLE Users
+ADD CONSTRAINT FK_Users_Thread_Username FOREIGN KEY (Username)
+REFERENCES Thread (Username)
+GO
+
+
+/* Foreign Key */
+ALTER TABLE Represent
+ADD CONSTRAINT FK_Represent_Features_FID FOREIGN KEY (FID)
+REFERENCES Features (FID)
+GO
+
+ALTER TABLE Represent
+ADD CONSTRAINT FK_Represent_Phones_PID FOREIGN KEY (PID)
+REFERENCES Phones (PID)
